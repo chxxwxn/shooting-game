@@ -4,7 +4,7 @@
 
 
 
-GIT 주소 : https://github.com/elflee-gwnu/24GameOperation.git
+GIT 주소 : https://github.com/chxxwxn/shooting-game.git
 
 GIT Branch : master
 GIT Commit ID : 37985b3a865e225d2a473ee2092c814ca9db30e
