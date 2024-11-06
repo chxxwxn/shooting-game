@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>비행기 슈팅 게임</title>
+  <link rel="stylesheet" href="game.css">
+</head>
+<body>
+  <div id="main-screen">
+    <h1>🚀 비행기 슈팅 게임 🚀</h1>
+    <p>적을 처치하고 점수를 쌓으며 최대한 오래 생존해보세요!<br>좌우 방향키로 이동하고, 스페이스바로 공격하세요!</p>
+    <button onclick="startGame()">게임 시작</button>
+  </div>
+  <div class="game-container hidden">
+    <div id="game">
+      <div id="background"></div>
+      <div id="player"></div>
+    </div>
+    <div class="info-panel">
+      생존 시간: <span id="timer">0</span>초 | 생명: <span id="lives">3</span>
+    </div>
+  </div>
+  <div id="game-over" class="hidden">
+    <p>게임 오버!</p>
+    <p id="final-score"></p>
+    <button onclick="resetGame()">다시 시작</button>
+  </div>
+
+  <audio id="shoot-sound" src="shoot.mp3"></audio>
+  <audio id="explosion-sound" src="explosion.mp3"></audio>
+  <audio id="game-over-sound" src="game-over.mp3"></audio>
+  <script src="game.js"></script>
+</body>
+</html>

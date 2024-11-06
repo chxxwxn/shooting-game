@@ -1,0 +1,204 @@
+/* 기본 설정 */
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+  font-family: 'Arial', sans-serif;
+  background: #000;
+  overflow: hidden;
+  background-image: url('main-background.jpg');
+}
+
+#main-screen {
+  text-align: center;
+  padding: 70px;
+  background: rgba(0, 0, 0, 0.8);
+  border: 3px solid #FFD700;
+  border-radius: 20px;
+  box-shadow: 0px 0px 25px rgba(255, 215, 0, 0.7);
+  position: relative;
+  background-image: url('main-background.jpg');
+  background-size: cover;
+  background-position: center;
+}
+
+#main-screen h1 {
+  font-size: 3em;
+  color: #FFD700;
+  text-shadow: 0px 0px 10px #FF6347, 0px 0px 20px #FF4500;
+  margin-bottom: 20px;
+}
+
+#main-screen p {
+  color: #FFD700;
+  font-size: 1.2em;
+  margin-bottom: 20px;
+}
+
+#main-screen button, #game-over button {
+  font-size: 1.4em;
+  padding: 15px 40px;
+  background: linear-gradient(45deg, #FFD700, #FF4500);
+  border: none;
+  border-radius: 20px;
+  color: #000;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s;
+}
+
+#main-screen button:hover, #game-over button:hover {
+  background: linear-gradient(45deg, #FF4500, #FFD700);
+  color: #FFF;
+  transform: scale(1.1);
+}
+
+/* 게임 오버 블러 효과 */
+.blur {
+  filter: blur(8px);
+  pointer-events: none;
+}
+
+#game-over {
+  text-align: center;
+  padding: 30px;
+  background: rgba(0, 0, 0, 0.9);
+  border: 3px solid #FFD700;
+  border-radius: 20px;
+  box-shadow: 0px 0px 25px rgba(255, 215, 0, 0.7);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+}
+
+#game-over p {
+  color: #FFD700;
+  font-size: 1.5em;
+  margin: 10px 0;
+}
+
+/* 게임 컨테이너 */
+.game-container {
+  width: 100%;
+  max-width: 800px;
+  position: relative;
+  text-align: center;
+}
+
+#background {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: url('main-background.jpg') repeat-y;
+  animation: moveBackground 5s linear infinite;
+}
+
+@keyframes moveBackground {
+  0% { background-position-y: 0; }
+  100% { background-position-y: 100%; }
+}
+
+#game {
+  position: relative;
+  width: 100%;
+  height: 500px;
+  background-color: rgba(0, 0, 0, 0.8);
+  overflow: hidden;
+  border: 4px solid #FFD700;
+  border-radius: 15px;
+  box-shadow: 0px 0px 20px rgba(255, 215, 0, 0.7);
+}
+
+#player {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  width: 50px;
+  height: 50px;
+  background-image: url('player-plane.png');
+  background-size: cover;
+  transform: translateX(-50%);
+}
+
+.bullet {
+  position: absolute;
+  width: 6px;
+  height: 15px;
+  background: linear-gradient(0deg, #FFFF00, #FF4500);
+  border-radius: 50%;
+  box-shadow: 0px 0px 8px rgba(255, 215, 0, 0.8);
+  animation: bullet-shine 0.5s infinite alternate;
+}
+
+@keyframes bullet-shine {
+  0% { box-shadow: 0px 0px 10px rgba(255, 255, 0, 0.6); }
+  100% { box-shadow: 0px 0px 15px rgba(255, 100, 0, 1); }
+}
+
+.enemy {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  background-image: url('enemy-plane.png');
+  background-size: cover;
+  animation: enemy-float 3s ease-in-out infinite;
+}
+
+@keyframes enemy-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(10px); }
+}
+
+/* 보스 체력 바 */
+.boss-health-bar {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 10px;
+  background-color: #444;
+  border-radius: 5px;
+}
+
+.boss-health {
+  width: 100%;
+  height: 100%;
+  background-color: #FF4500;
+  border-radius: 5px;
+}
+
+
+/* 파워업 요소 - 별 모양 */
+.power-up {
+  width: 30px;
+  height: 30px;
+  background: url('star.png'); /* 파워업을 별 모양 이미지로 변경 */
+  background-size: cover;
+  position: absolute;
+  animation: powerUp-glow 1s infinite alternate;
+}
+
+@keyframes powerUp-glow {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.1); }
+}
+
+.info-panel {
+  margin-top: 10px;
+  font-size: 1.3em;
+  color: #FFD700;
+  text-shadow: 0px 0px 5px #FF6347;
+}
+
+.hidden {
+  display: none;
+}
+
+#final-score {
+  color: #FFD700;
+  font-size: 1.5em;
+}
