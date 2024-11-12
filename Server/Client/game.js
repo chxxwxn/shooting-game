@@ -8,22 +8,26 @@ let enemyInterval;
 let powerUpInterval;
 let bulletSpeed = 15;
 let initialEnemySpeed = 1;
-let enemySpeed = initialEnemySpeed;
+let enemySpeed = 1;
 let playerSpeed = 7;
 let targetPosition = player.offsetLeft;
 let lives = 3;
 let initialEnemyInterval = 2000;
-const maxEnemies = 10; // 최대 적 수를 10명으로 설정
-let dualShotActive = false; // 두 발 발사 여부를 저장하는 변수
+const maxEnemies = 10;
+let dualShotActive = false;
 const milestones = [50, 100, 150, 200, 250, 300];
 const comments = ["good", "great", "excellent", "amazing", "unbelievable", "fantastic"];
 const shootSound = document.getElementById('shoot-sound');
 const explosionSound = document.getElementById('explosion-sound');
 const gameOverSound = document.getElementById('game-over-sound');
-let moveDirection = null;
-
+let keys = {};
 let bossAlive = false;
-let bossDamageCount = 0; // 보스가 맞은 총알 수 추적
+let bossDamageCount = 0;
+let lastBulletTime = 0; // 마지막 총알 발사 시간
+const bulletDelay = 150; // 총알 발사 딜레이 (밀리초 단위)
+let laserActive = false;
+let laserDuration = 3000; // 레이저 지속 시간 (밀리초)
+let laserDamageInterval = 1000; // 1초마다 적에 데미지를 가함
 
 function startGame() {
   document.getElementById('main-screen').classList.add('hidden');
@@ -32,23 +36,18 @@ function startGame() {
   resetGame();
   startTimer();
   
-  // `playing` 상태를 true로 설정하여 게임이 시작됨을 명확히 함
   playing = true;
+  requestAnimationFrame(gameLoop);
 
-  // 플레이어 이동 함수 호출
-  requestAnimationFrame(movePlayer);
-
-  // 주기적으로 적을 생성하고 파워업을 생성하도록 설정
   enemyInterval = setInterval(createEnemy, initialEnemyInterval);
-  powerUpInterval = setInterval(createPowerUp, 10000); // 10초마다 파워업 생성
-
-  // Google Apps Script에 게임 시작 로그를 기록
+  powerUpInterval = setInterval(createPowerUp, 10000);
+  
   const userId = localStorage.getItem("userId") || "알 수 없음";
-  const scriptUrl = "https://script.google.com/macros/s/AKfycbzHPs-RfCEDJiujwmQMRT0Feosu08SH2UGDe8OK50gULjT7Wz5TEW91QtT2CTdKC7aL/exec"; // 정확한 URL로 대체
+  const scriptUrl = "https://script.google.com/macros/s/AKfycbzHPs-RfCEDJiujwmQMRT0Feosu08SH2UGDe8OK50gULjT7Wz5TEW91QtT2CTdKC7aL/exec";
 
   fetch(scriptUrl, {
     method: "POST",
-    mode: "no-cors", // no-cors 모드 추가
+    mode: "no-cors",
     headers: {
       "Content-Type": "application/json"
     },
@@ -64,133 +63,64 @@ function startGame() {
   .catch(error => {
       console.error("fetch 요청 오류 발생:", error.message);
   });
-  
 }
 
 // 키보드 이벤트 리스너 설정
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'ArrowLeft') {
-    moveDirection = 'left';
-  } else if (e.key === 'ArrowRight') {
-    moveDirection = 'right';
-  } else if (e.key === ' ' && playing) {
+  keys[e.key] = true;
+});
+
+document.addEventListener('keyup', (e) => {
+  keys[e.key] = false;
+});
+
+// 게임 루프: 이동 및 발사를 동시에 처리
+function gameLoop() {
+  movePlayer();
+  
+  if (keys[' '] && canShoot()) { // 스페이스바가 눌렸고 발사 가능할 때
     shootBullet();
   }
-});
-
-document.addEventListener('keyup', (e) => {
-  if (e.key === 'ArrowLeft' && moveDirection === 'left') {
-    moveDirection = null;
-  } else if (e.key === 'ArrowRight' && moveDirection === 'right') {
-    moveDirection = null;
-  }
-});
-
-// `movePlayer` 함수 예시
-function movePlayer() {
-  const currentLeft = player.offsetLeft;
-
-  if (moveDirection === 'left') {
-    targetPosition = Math.max(0, currentLeft - playerSpeed);
-  } else if (moveDirection === 'right') {
-    targetPosition = Math.min(gameContainer.offsetWidth - player.offsetWidth, currentLeft + playerSpeed);
-  }
-
-  player.style.left = `${targetPosition}px`;
+  
   if (playing) {
-    requestAnimationFrame(movePlayer);
+    requestAnimationFrame(gameLoop);
   }
 }
 
-// `shootBullet` 함수 예시
-function shootBullet() {
-  const bullet = document.createElement('div');
-  bullet.classList.add('bullet');
-  
-  bullet.style.left = `${player.offsetLeft + player.offsetWidth / 2 - 5}px`; // 총알 위치 조정
-  bullet.style.bottom = '60px';
-  gameContainer.appendChild(bullet);
-  shootSound.play();
-
-  // 총알 이동 설정
-  const moveBullet = setInterval(() => {
-    if (!playing) {
-      bullet.remove();
-      clearInterval(moveBullet);
-      return;
-    }
-    
-    bullet.style.bottom = `${parseInt(bullet.style.bottom) + bulletSpeed}px`;
-
-    if (parseInt(bullet.style.bottom) > gameContainer.offsetHeight) {
-      bullet.remove();
-      clearInterval(moveBullet);
-    }
-  }, 20);
-}
-
-document.addEventListener('keyup', (e) => {
-  if (e.key === 'ArrowLeft' && moveDirection === 'left') {
-    moveDirection = null;
-  } else if (e.key === 'ArrowRight' && moveDirection === 'right') {
-    moveDirection = null;
+// 총알 발사 가능 여부를 체크하는 함수
+function canShoot() {
+  const currentTime = Date.now();
+  if (currentTime - lastBulletTime >= bulletDelay) {
+    lastBulletTime = currentTime;
+    return true;
   }
-});
+  return false;
+}
 
 function movePlayer() {
   const currentLeft = player.offsetLeft;
+  const expandedBoundaryRight = 20; // 오른쪽으로 이동할 수 있는 추가 범위
 
-  if (moveDirection === 'left') {
-    targetPosition = Math.max(0, currentLeft - playerSpeed);
-  } else if (moveDirection === 'right') {
-    targetPosition = Math.min(gameContainer.offsetWidth - player.offsetWidth, currentLeft + playerSpeed);
+  if (keys['ArrowLeft']) {
+    targetPosition = Math.max(0, currentLeft - playerSpeed); // 왼쪽은 화면 밖으로 나가지 않도록 제한
+  } else if (keys['ArrowRight']) {
+    targetPosition = Math.min(gameContainer.offsetWidth - player.offsetWidth + expandedBoundaryRight, currentLeft + playerSpeed); // 오른쪽은 추가 범위 포함
   }
 
   player.style.left = `${targetPosition}px`;
-  requestAnimationFrame(movePlayer);
 }
 
+// `shootBullet` 함수
 function shootBullet() {
-  createBullet(player.offsetLeft + player.offsetWidth / 2 - 33); // 첫 번째 총알 생성
-  
-  if (dualShotActive) {
-    createBullet(player.offsetLeft + player.offsetWidth / 2 + 15); // 두 번째 총알 위치 조정
-  }
-}
+  if (!playing) return;
 
-function checkMilestone() {
-  const index = milestones.indexOf(zombiesKilled);
-  if (index !== -1) {
-    const userId = localStorage.getItem("userId") || "알 수 없음";
-    const scriptUrl = "https://script.google.com/macros/s/AKfycbzHPs-RfCEDJiujwmQMRT0Feosu08SH2UGDe8OK50gULjT7Wz5TEW91QtT2CTdKC7aL/exec"; // 정확한 URL로 대체
+  const bulletLeftPositions = dualShotActive
+    ? [player.offsetLeft + player.offsetWidth / 2 - 33, player.offsetLeft + player.offsetWidth / 2 + 15]
+    : [player.offsetLeft + player.offsetWidth / 2 - 5];
 
-    // milestone에 맞는 로그 기록 요청 (응답 불필요)
-    fetch(scriptUrl, {
-      method: "POST",
-      mode: "no-cors", // no-cors 모드 추가
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        userId: userId,
-        message: `${zombiesKilled}마리 잡음`,
-        comment: comments[index]
-      })
-    })
-    .then(() => {
-      console.log(`${zombiesKilled}마리 잡음 로그 기록 시도`);
-    })
-    .catch(error => {
-      console.error("몹 처치 milestone 시 fetch 요청 오류 발생:", error.message);
-    });
-  }
-}
-
-// 기존의 몹 처치 코드에서 `zombiesKilled` 변수 증가 후 호출
-function killEnemy() {
-  zombiesKilled++; // 몹 처치 시 갱신
-  updateZombiesKilledDisplay(); // 화면에 업데이트된 몹 처치 수 표시
-  checkMilestone(); // milestone 달성 여부 확인 및 로그 기록
+  bulletLeftPositions.forEach((leftPosition) => {
+    createBullet(leftPosition);
+  });
 }
 
 function createBullet(leftPosition) {
@@ -208,7 +138,7 @@ function createBullet(leftPosition) {
       clearInterval(moveBullet);
       return;
     }
-    
+
     bullet.style.bottom = `${parseInt(bullet.style.bottom) + bulletSpeed}px`;
 
     if (parseInt(bullet.style.bottom) > gameContainer.offsetHeight) {
@@ -218,7 +148,7 @@ function createBullet(leftPosition) {
 
     const hitEnemy = Array.from(document.querySelectorAll('.enemy')).find(enemy => checkCollision(bullet, enemy));
     const hitBoss = document.querySelector('#boss') && checkCollision(bullet, document.querySelector('#boss'));
-    
+
     if (hitEnemy) {
       explosionSound.play();
       bullet.remove();
@@ -227,7 +157,7 @@ function createBullet(leftPosition) {
       clearInterval(moveBullet);
       createEnemy();
     }
-    
+
     if (hitBoss) {
       bullet.remove();
       hitBoss.takeDamage(1);
@@ -235,6 +165,15 @@ function createBullet(leftPosition) {
     }
   }, 20);
 }
+
+// 나머지 코드는 그대로 유지
+function increaseEnemySpeed() {
+  enemySpeed += 0.5; // 적의 속도 0.5씩 증가
+  console.log(`적의 속도 증가: 현재 속도 ${enemySpeed}`);
+}
+
+// 50초마다 적의 속도 증가
+setInterval(increaseEnemySpeed, 50000);
 
 function createEnemy() {
   if (!playing || document.querySelectorAll('.enemy').length >= maxEnemies) return;
@@ -321,7 +260,74 @@ function activatePowerUpEffect() {
   }, 5000);
 }
 
+function createLaserPowerUp() {
+  if (!playing) return;
 
+  const powerUp = document.createElement('div');
+  powerUp.classList.add('power-up', 'laser-item'); // 레이저 아이템 표시를 위한 클래스 추가
+
+  powerUp.style.left = `${Math.floor(Math.random() * (gameContainer.offsetWidth - 30))}px`;
+  powerUp.style.top = '0px';
+  gameContainer.appendChild(powerUp);
+
+  const movePowerUp = setInterval(() => {
+    if (!playing) {
+      powerUp.remove();
+      clearInterval(movePowerUp);
+      return;
+    }
+
+    powerUp.style.top = `${parseInt(powerUp.style.top) + 2}px`;
+
+    if (parseInt(powerUp.style.top) > gameContainer.offsetHeight) {
+      powerUp.remove();
+      clearInterval(movePowerUp);
+    }
+
+    if (checkCollision(powerUp, player)) {
+      powerUp.remove();
+      clearInterval(movePowerUp);
+      activateLaser(); // 레이저 활성화
+    }
+  }, 20);
+}
+
+function activateLaser() {
+  if (laserActive) return; // 이미 레이저가 활성화되어 있으면 실행하지 않음
+  laserActive = true;
+
+  const laser = document.createElement('div');
+  laser.classList.add('laser');
+  laser.style.left = `${player.offsetLeft + player.offsetWidth / 2 - 2}px`;
+  laser.style.bottom = '60px';
+  laser.style.height = `${gameContainer.offsetHeight - 60}px`; // 게임 화면 끝까지 닿도록 높이 설정
+  gameContainer.appendChild(laser);
+
+  const laserDamage = setInterval(() => {
+    if (!playing || !laserActive) {
+      clearInterval(laserDamage);
+      laser.remove();
+      return;
+    }
+
+    // 레이저에 닿은 적에게 데미지 입히기
+    const hitEnemies = Array.from(document.querySelectorAll('.enemy')).filter(enemy => checkCollision(laser, enemy));
+    hitEnemies.forEach(enemy => {
+      explosionSound.play();
+      enemy.remove(); // 적 제거 (1초 동안 닿으면 데미지)
+      zombiesKilled++;
+    });
+  }, laserDamageInterval);
+
+  setTimeout(() => {
+    laserActive = false; // 레이저 비활성화
+    laser.remove();
+    clearInterval(laserDamage);
+  }, laserDuration); // 3초 후 레이저 제거
+}
+
+// 레이저 아이템 생성 주기 설정 (예: 20초마다 생성)
+setInterval(createLaserPowerUp, 20000);
 
 function createBoss() {
   bossAlive = true;
