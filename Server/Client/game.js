@@ -42,7 +42,7 @@ function startGame() {
   enemyInterval = setInterval(createEnemy, initialEnemyInterval);
   powerUpInterval = setInterval(createPowerUp, 10000);
   
-  const userId = localStorage.getItem("userId") || "알 수 없음";
+  const userId = localStorage.getItem("userId");
   const scriptUrl = "https://script.google.com/macros/s/AKfycbzHPs-RfCEDJiujwmQMRT0Feosu08SH2UGDe8OK50gULjT7Wz5TEW91QtT2CTdKC7aL/exec";
 
   fetch(scriptUrl, {
