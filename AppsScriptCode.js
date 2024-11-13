@@ -36,7 +36,8 @@ function doGet(e) {
     ['20221574', '한석범'],
     ['20221923', '이중현'],
     ['20231868', '김지혜'],
-    ['20241862', '이기정']
+    ['20241862', '이기정'],
+    ['123', '123']
   ];
 
   const spreadsheetId = '16ZPTlk_6KAww7hYy2l-KVtsla4Nmi9Dyk9hN4UU4voA';
