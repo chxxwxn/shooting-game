@@ -36,11 +36,11 @@ function doGet(e) {
     ['20221574', '한석범'],
     ['20221923', '이중현'],
     ['20231868', '김지혜'],
-    ['20241862', '이기정'],
-    ['123', '123']
+    ['20241862', '이기정']
+    ['123','123']
   ];
 
-  const spreadsheetId = '16ZPTlk_6KAww7hYy2l-KVtsla4Nmi9Dyk9hN4UU4voA';
+  const spreadsheetId = '16ZPTlk_6KAww7hYy2l-KVtsla4Nmi9Dyk9hN4UU4voA'; // 여기에 스프레드시트 ID 입력
   const sheet = SpreadsheetApp.openById(spreadsheetId).getSheets()[0];
 
   const userId = e.parameter && e.parameter.id;
@@ -64,7 +64,9 @@ function doGet(e) {
     }
   }
 
-  return ContentService.createTextOutput(JSON.stringify(response)).setMimeType(ContentService.MimeType.JSON);
+  return ContentService.createTextOutput(JSON.stringify(response))
+    .setMimeType(ContentService.MimeType.JSON)
+    .setHeader('Access-Control-Allow-Origin', '*'); // CORS 허용
 }
 
 // 로그 기록 함수
@@ -83,4 +85,37 @@ function logAttempt(sheet, userId, message, comment) {
     message,                          // E열: 로그인 성공/실패 여부
     comment                           // F열: 로그인 성공/실패 코멘트 ("success" 또는 "fail")
   ]);
+}
+
+function doPost(e) {
+  try {
+    const data = JSON.parse(e.postData.contents);
+    const { userId, message, comment, score, timeSurvived } = data; // 추가 필드 포함
+
+    const spreadsheetId = '16ZPTlk_6KAww7hYy2l-KVtsla4Nmi9Dyk9hN4UU4voA'; // 스프레드시트 ID
+    const sheet = SpreadsheetApp.openById(spreadsheetId).getActiveSheet();
+
+    // 로그 기록
+    const logOrder = sheet.getLastRow() + 1;
+    sheet.appendRow([
+      logOrder,                            // A열: 로그 순서
+      new Date().toLocaleDateString(),     // B열: 날짜
+      new Date().toLocaleTimeString(),     // C열: 시간
+      userId || "Unknown",                 // D열: 사용자 ID
+      message,                             // E열: 메시지 (게임 시작, 게임 종료 등)
+      comment,                             // F열: 코멘트 ("start", "die" 등)
+      score || "N/A",                      // G열: 점수 (게임 오버 시 기록)
+      timeSurvived || "N/A"                // H열: 생존 시간 (게임 오버 시 기록)
+    ]);
+
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'success' }))
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeader('Access-Control-Allow-Origin', '*'); // CORS 허용
+  } catch (error) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'error', message: error.message }))
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeader('Access-Control-Allow-Origin', '*'); // CORS 허용
+  }
 }
